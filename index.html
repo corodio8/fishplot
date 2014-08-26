@@ -1,0 +1,94 @@
+<html>
+<head>
+    <meta charset='UTF-8'>
+     <title>Guide to Shooting Fish in a Barrel</title>
+     <style>
+     </style>
+</head>
+<body onload="init();">
+    <div align='center'>
+    </div>
+    <script src="jquery-2.1.1.min.js"></script>
+    <script src="jqplot/jquery.jqplot.min.js"></script>
+    <script src="jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script src="jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="jqplot/jquery.jqplot.css" />
+
+
+
+    <script>
+        function init() {
+            pointSet = [];
+            $.ajax({
+                    dataType: "html",
+                    url: "site/random/",
+                    success: success,
+                    error: error
+            });
+
+        //     main = new Main();
+
+        }
+
+        function success(data) {
+            var parseData = JSON.parse(data); 
+            var linePlot = [];
+            for (var i=0; i < parseData.length; i++) {
+                var coord = [parseData[i].x,parseData[i].y];
+                pointSet.push(coord);
+            }
+            
+            var theta0 = 0;
+            var theta1 = 0;
+            var alpha = .0001;
+            var m = pointSet.length;
+            var sumX = 0;
+            var sumY = 0;
+            var minX = 0;
+            var maxX = 10;
+            // costfunction = theta0 + theta1 * X
+            // gradient descrent algorithm, repeat until right = 0:
+            //
+            // theta0 = theta0 - alpha/m sum(1..m) ((theta0 + theta1) * Xi - Yi)
+            // theta1 = theta1 - alpha/m sum(1..m) (((theta0 + theta1) * Xi - Yi) * Xi)
+            
+            for ( k=1; k<1000000; k++) {
+                sumX = 0;
+                sumY = 0;
+                for (var i=0; i < m; i++) {
+                    sumX = sumX + theta0 + theta1 * pointSet[i][0] - pointSet[i][1];
+                    sumY = sumY + (theta0 + theta1 * pointSet[i][0] - pointSet[i][1])*pointSet[i][0];
+                }
+                theta0 = theta0 - alpha/m * sumX;
+                theta1 = theta1 - alpha/m * sumY;
+                if (sumX == 0 &&  sumY == 0) { 
+                    break; 
+                }
+            }
+            
+            linePlot.push([minX,theta0 + theta1 * minX]);
+            linePlot.push([maxX, theta0 + theta1 * maxX]);
+
+            var plot1 = $.jqplot('chart1', [pointSet, linePlot], {
+                series:[
+                    {showLine:false},
+                    {showMarker:false}
+                ],
+                axes:{
+                    xaxis:{label:'# of Fish'},
+                    yaxis:{label:'Size of Barrel (Liters)'}
+                }
+            });
+
+        }
+
+        function error() {
+            $('<p>Error</p>').appendTo('#textContent');
+        }
+
+    </script>
+
+    <div id="chart1" style="height:400px;width:300px; "></div>
+    <div id="textContent"></div>
+</body>
+</html>
